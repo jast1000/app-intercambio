@@ -28,7 +28,7 @@ public class ParticipantesDAOImpl implements ParticipantesDAOInterface {
         Usuario u;
         String sql = "select \"IdUsuario\" as usuario, \"Password\" as password, \"TipoUsuario\" as \"tipoUsuario\" from \"Usuarios\""
                 + " where \"IdUsuario\" = ? and \"Password\" = ?";
-        Session s = sf.getCurrentSession();
+        Session s = sf.openSession();
         s.beginTransaction();
         u = (Usuario) s.createSQLQuery(sql)
                 .setString(0, usuario)
@@ -44,7 +44,7 @@ public class ParticipantesDAOImpl implements ParticipantesDAOInterface {
         Usuario u;
         String sql = "select \"IdUsuario\" as usuario, \"Password\" as password, \"TipoUsuario\" as \"tipoUsuario\" from \"Usuarios\""
                 + " where \"IdUsuario\" = ?";
-        Session s = sf.getCurrentSession();
+        Session s = sf.openSession();
         s.beginTransaction();
         u = (Usuario) s.createSQLQuery(sql)
                 .setString(0, usuario)
@@ -57,7 +57,7 @@ public class ParticipantesDAOImpl implements ParticipantesDAOInterface {
     @Override
     public void registrarUsuario(Usuario u) throws Exception {
         String sql = "insert into \"Usuarios\"(\"IdUsuario\", \"Password\", \"TipoUsuario\") values(?, ?, ?)";
-        Session s = sf.getCurrentSession();
+        Session s = sf.openSession();
         s.beginTransaction();
         s.createSQLQuery(sql)
                 .setString(0, u.getUsuario())
@@ -70,7 +70,7 @@ public class ParticipantesDAOImpl implements ParticipantesDAOInterface {
     @Override
     public List<Usuario> listarUsuariosPorEstado(Integer estado) throws Exception {
         List<Usuario> us;
-        String sql = "select u.\"IdUsuario\" as usuario, u.\"TipoUsuario\" from \"Usuarios\" as u"
+        String sql = "select u.\"IdUsuario\" as usuario, u.\"TipoUsuario\" as \"tipoUsuario\" from \"Usuarios\" as u"
                 + " left join \"Participantes\" as a using(\"IdUsuario\")"
                 + " left join \"Asistencia\" as asi using(\"IdPart\")";
         String where = "";
@@ -81,7 +81,7 @@ public class ParticipantesDAOImpl implements ParticipantesDAOInterface {
         } else if (3 == estado) {
             where += " where asi.\"Afirmacion\" = false";
         }
-        Session s = sf.getCurrentSession();
+        Session s = sf.openSession();
         s.beginTransaction();
         us = (List<Usuario>) s.createSQLQuery(sql + where)
                 .setResultTransformer(Transformers.aliasToBean(Usuario.class))
@@ -96,7 +96,7 @@ public class ParticipantesDAOImpl implements ParticipantesDAOInterface {
                 + " \"Grupo\" as grupo, \"Area\" as area, \"Gustos\" as gustos, \"IdUsuario\" as usuario FROM \"Participantes\" "
                 + " where \"IdUsuario\" = ?";
         Participante p;
-        Session s = sf.getCurrentSession();
+        Session s = sf.openSession();
         s.beginTransaction();
         p = (Participante) s.createSQLQuery(sql)
                 .setString(0, usuario)
@@ -112,7 +112,7 @@ public class ParticipantesDAOImpl implements ParticipantesDAOInterface {
                 + "\"Sexo\", \"Grado\", \"Grupo\", \"Area\", \"Gustos\", \"IdUsuario\") values(?, ?, ?, ?, ?, ?, ?,?, ?)";
         String insertAsistencia = "insert into \"Asistencia\"(\"IdPart\", \"Afirmacion\") values(?, NULL);";
         String idParticipante = UUID.randomUUID().toString();
-        Session s = sf.getCurrentSession();
+        Session s = sf.openSession();
         s.beginTransaction();
         s.createSQLQuery(insertParticipantes)
                 .setString(0, idParticipante)
@@ -139,7 +139,7 @@ public class ParticipantesDAOImpl implements ParticipantesDAOInterface {
         String sqlDelAsistencia = "delete from \"Asistencia\" where \"IdPart\" = ?";
         String sqlDelParticipante = "delete from \"Participantes\" where \"IdPart\" = ?";
         String sqlDelUsuarios = "delete from \"Usuarios\" where \"IdUsuario\" = ?";
-        Session s = sf.getCurrentSession();
+        Session s = sf.openSession();
         s.beginTransaction();
         String idParticipante = (String) s.createSQLQuery(sqlPart)
                 .setString(0, usuario)
@@ -165,7 +165,7 @@ public class ParticipantesDAOImpl implements ParticipantesDAOInterface {
     public void actualizarPerfilParticipante(Participante p) throws Exception {
         String sql = "update \"Participantes\" set \"Nombre\" = ?, \"Edad\" = ?, \"Sexo\" = ?, "
                 + "\"Grado\" = ?, \"Grupo\" = ?, \"Area\" = ?, \"Gustos\" = ? where \"IdUsuario\" = ?;";
-        Session s = sf.getCurrentSession();
+        Session s = sf.openSession();
         s.beginTransaction();
         s.createSQLQuery(sql)
                 .setString(0, p.getNombres())
