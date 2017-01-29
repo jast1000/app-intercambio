@@ -1,11 +1,15 @@
 # API app-intercambio
 
+```
+URL Producción: http://janiserver.servehttp.com:8080/app-intercambio/
+```
+
 ## Identificar usuario [POST]
 
 http://localhost:8080/app-intercambio/webresources/api/usuarios/identificacion
 
 Permite identificar un usuario si existe en el sistema, si este existe muestra su información de lo contrario el status de la petición será distinto a exitoso.
-
+El tipoUsuario 1 corresponde a un administrador y el tipo 2 a un participante.
 
 ### Solicitud
 ```json
@@ -23,32 +27,13 @@ Permite identificar un usuario si existe en el sistema, si este existe muestra s
 }
 ```
 
-## Listar usuarios [GET]
-
-http://localhost:8080/app-intercambio/webresources/api/usuarios/participacion/*estado*
-
-Lista los usuarios registrados en el sistema, recibe un parámetro opcional *estado*:
-* 1 Usuarios que aún no registran su perfil y no participan en el intercambio
-* 2 Usuarios que cuentan con perfil y han aceptado el intercambio
-* 3 Usuarios que cuentan con perfil y no aceptaron el intercambio
-
-### Respuesta
-```json
-[
-    {
-        "usuario": "jast1000@gmail.com",
-        "password": null,
-        "tipoUsuario": 1
-    }
-]
-```
-
 ## Registrar usuario [POST]
 
 http://localhost:8080/app-intercambio/webresources/api/usuarios
 
 
-Permite dar de alta (invitar) a un usuario. El tipo debe ser 2. (Tipo 1 únicamente para administrador).
+Permite dar de alta (invitar) a un usuario. El tipo debe ser 2.
+Verificar que el status de la respuesta sea *200* de lo contrario podría existir un error o un mensaje de que el usuario existe.
 
 ### Solicitud
 ```json
@@ -57,72 +42,85 @@ Permite dar de alta (invitar) a un usuario. El tipo debe ser 2. (Tipo 1 únicame
   "tipoUsuario": "2"
 }
 ```
-
-## Eliminar un usuario [DELETE]
-
-http://localhost:8080/app-intercambio/webresources/api/usuarios/*usuario*
-
-
 Permite eliminar un usuario, donde usuario es el correo electrónico (id) del usuario.
 
 ## Consultar perfil de participante [GET]
 
-http://localhost:8080/app-intercambio/webresources/api/participantes/*usuario*
+http://localhost:8080/app-intercambio/webresources/api/perfiles/{usuario}
 
 Permite consultar el perfil de un participante, si este existe se obtiene su información, en caso contrario el status será distinto a 200.
-
+Nota: Esta función debe lanzarse  en la pantalla de creación de perfil para conocer si está creado dejarlo llenar, si ya existe (hay información) no debe dejarse llenar la pantalla.
 
 ### Respuesta
 ```json
 {
-    "idParticipante": "308d5295-a31c-4a91-944f-364154a5ea03",
-    "nombres": "Jesús Alberto",
+    "idParticipante": "7116370e-1f44-45e3-9d11-a2312fb29b72",
+    "nombres": "Jesus",
     "edad": 23,
-    "sexo": "Masculino",
-    "grado": "NA",
-    "grupo": "NA",
-    "area": "Sistemas",
-    "gustos": "* Tacos al pastor",
-    "usuario": "jast1000@gmail.com"
+    "sexo": "masculino",
+    "grado": "1",
+    "grupo": "a",
+    "area": "area",
+    "gustos": "x",
+    "usuario": "jast1000@gmail.com",
+    "opcionesIntercambio": "1 Mochila, 2 Sueter, 3 USB 16 GB"
 }
 ```
 
 ## Guardar perfil participante [POST]
 
-http://localhost:8080/app-intercambio/webresources/api/participantes
+http://localhost:8080/app-intercambio/webresources/api/perfiles
 
-Guardar el perfil de un participante. Si al consultar un perfil no existe respuesta para un usuario pero si se encuentra registrado, esta función debe llamarse para crear su perfil. El atributo usuario indica a qué usuario pertenece el perfil.
+Permite guardar el perfil de un usuario registrado en el sistema. En caso de no existir el usuario la respuesta tendrá un status distinto a 200
 
 ### Solicitud
 ```json
 {
-    "nombres": "Juan",
-    "edad": 25,
-    "sexo": "Masculino",
-    "grado": "NA",
-    "grupo": "NA",
-    "area": "Contabilidad",
-    "gustos": "* Futbol",
-    "usuario": "juan@gmail.com"
+    "nombres": "Jesus",
+    "edad": 23,
+    "sexo": "masculino",
+    "grado": "1",
+    "grupo": "a",
+    "area": "area",
+    "gustos": "x",
+    "usuario": "jast1000@gmail.com",
+    "opcionesIntercambio": "1 Mochila, 2 Sueter, 3 USB 16 GB"
 }
 ```
 
-## Modificar perfil participante [PUT]
+## Lista de intercambios del administrador [GET]
 
-http://localhost:8080/app-intercambio/webresources/api/participantes
+Permite visualizar los intercambios creados por el administrador y su estado (únicamente se puede hacer uno en teoría).
+El estado 1 corresponde a creado, por lo cual el botón de sorteo podría estar habilitado.
+El estado 2 corresponde a sorteado, es decir, ya existe asignación de parejas, no debería ser posible volver a sortear.
+Si el status de respuesta es 204 (no content) es posible crear un intercambio
+Nota: la fecha está en long (new Date(fechalong); para crear fecha a partir del número en Javascript)
 
-Actualiza los datos del perfil de un participante.
+http://localhost:8080/app-intercambio/webresources/api/intercambios
 
-### Solicitud
+### Respuesta
+```json
+[
+    {
+        "idRegla": 1,
+        "lugar": "UNIVO",
+        "fecha": 1485723141377,
+        "monto": 300,
+        "estado": 1
+    }
+]
+```
+
+## Crear intercambio [POST]
+Permite crear un intercambio, definiendo las reglas para este, lugar, fecha y monto mínimo.
+Si existe un intercambio, la respuesta es distinta a 200.
+Nota: la fecha está en formato ISO (en Javascript se obtiene con fecha.toISOString())
+
+### Petición
 ```json
 {
-    "nombres": "Juan Ramón",
-    "edad": 25,
-    "sexo": "Masculino",
-    "grado": "1",
-    "grupo": "A",
-    "area": "Computación",
-    "gustos": "* Futbol",
-    "usuario": "juan@gmail.com"
+  "lugar": "UNIVO",
+  "fecha": "2017-01-29T20:52:21.377Z",
+  "monto": "300"
 }
 ```
