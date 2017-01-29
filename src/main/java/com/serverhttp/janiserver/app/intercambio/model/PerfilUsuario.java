@@ -4,7 +4,7 @@ package com.serverhttp.janiserver.app.intercambio.model;
  *
  * @author JAST
  */
-public class Participante {
+public class PerfilUsuario {
 
     private String idParticipante;
     private String nombres;
@@ -14,9 +14,10 @@ public class Participante {
     private String grupo;
     private String area;
     private String gustos;
+    private String OpcionesIntercambio;
     private String usuario;
 
-    public Participante() {
+    public PerfilUsuario() {
     }
 
     public String getUsuario() {
@@ -91,6 +92,14 @@ public class Participante {
         this.gustos = gustos;
     }
 
+    public String getOpcionesIntercambio() {
+        return OpcionesIntercambio;
+    }
+
+    public void setOpcionesIntercambio(String OpcionesIntercambio) {
+        this.OpcionesIntercambio = OpcionesIntercambio;
+    }
+    
     @Override
     public String toString() {
         return "Participante{" + "idParticipante=" + idParticipante + ", nombres=" + nombres + ", edad=" + edad + ", sexo=" + sexo + ", grado=" + grado + ", grupo=" + grupo + ", area=" + area + ", gustos=" + gustos + ", usuario=" + usuario + '}';
