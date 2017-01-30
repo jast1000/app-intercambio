@@ -1,6 +1,7 @@
 package com.serverhttp.janiserver.app.intercambio.service.impl;
 
 import com.serverhttp.janiserver.app.intercambio.hibernate.HibernateUtil;
+import com.serverhttp.janiserver.app.intercambio.model.EstadoAsistencia;
 import com.serverhttp.janiserver.app.intercambio.model.Intercambio;
 import com.serverhttp.janiserver.app.intercambio.model.PerfilUsuario;
 import com.serverhttp.janiserver.app.intercambio.model.Usuario;
@@ -9,6 +10,7 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.transform.Transformers;
 import com.serverhttp.janiserver.app.intercambio.service.IntercambioDAOInterface;
+import org.hibernate.SQLQuery;
 
 /**
  *
@@ -131,6 +133,91 @@ public class IntercambioDAOImpl implements IntercambioDAOInterface {
                 .setString(0, i.getLugar())
                 .setTimestamp(1, i.getFecha())
                 .setDouble(2, i.getMonto())
+                .executeUpdate();
+        s.getTransaction().commit();
+    }
+
+    @Override
+    public void generarSorteo() throws Exception {
+        Session s = sf.getCurrentSession();
+        s.beginTransaction();
+        String sqlCant = "select cast(count(*) as int) from \"Sorteo\"";
+        String sqlParts = "select p.\"IdPart\" from \"Participantes\" as p inner join \"Asistencia\" using(\"IdPart\") "
+                + " where \"Afirmacion\" = true";
+        String sqlSorteo = "insert into \"Sorteo\"(\"IdPart1\", \"IdPartInter\") values(?, ?)";
+        Integer cantidad = (Integer) s.createSQLQuery(sqlCant).uniqueResult();
+        if (cantidad > 0) {
+            throw new Exception("Ya existe un sorteo");
+        }
+        List<String> participantes = (List<String>) s.createSQLQuery(sqlParts)
+                .list();
+        int iteraciones = participantes.size() * 5;
+        for (int i = 1; i <= iteraciones; i++) {
+            int p = (int) (Math.random() * participantes.size());
+            participantes.add(participantes.remove(p));
+        }
+        int i = 0;
+        SQLQuery query;
+        while (i < participantes.size()) {
+            query = s.createSQLQuery(sqlSorteo);
+            if (i == participantes.size() - 1) {
+                query.setString(0, participantes.get(i))
+                        .setString(1, participantes.get(0));
+            } else {
+                query.setString(0, participantes.get(i))
+                        .setString(1, participantes.get(i + 1));
+            }
+            query.executeUpdate();
+            i++;
+        }
+        s.getTransaction().commit();
+    }
+
+    @Override
+    public PerfilUsuario consultarPerfilPareja(String idUsuario) throws Exception {
+        PerfilUsuario pu;
+        Session s = sf.getCurrentSession();
+        s.beginTransaction();
+        String sql = "select p.\"IdPart\" as \"idParticipante\", p.\"Nombre\" as nombres, p.\"Edad\" as edad, p.\"Sexo\" as sexo, p.\"Grado\" as grado, \n"
+                + "p.\"Grupo\" as grupo, p.\"Area\" as area, p.\"Gustos\" as gustos, p.\"OpcionesIntercambio\" as \"opcionesIntercambio\" from \"Sorteo\" as s\n"
+                + "inner join \"Participantes\" as p on s.\"IdPartInter\" = p.\"IdPart\"\n"
+                + "inner join \"Participantes\" as p1 on p1.\"IdPart\" = s.\"IdPart1\"\n"
+                + "inner join \"Usuarios\" as u on u.\"IdUsuario\" = p1.\"IdUsuario\"\n"
+                + "where u.\"IdUsuario\" = ?";
+        pu = (PerfilUsuario) s.createSQLQuery(sql)
+                .setString(0, idUsuario)
+                .setResultTransformer(Transformers.aliasToBean(PerfilUsuario.class))
+                .uniqueResult();
+        s.getTransaction().commit();
+        return pu;
+    }
+
+    @Override
+    public EstadoAsistencia consultarEstadoAsistencia(String idUsuario) throws Exception {
+        EstadoAsistencia asis;
+        String sql = "select r.\"Lugar\" as lugar, r.\"Fecha\" as fecha, r.\"Monto\" as monto, a.\"Afirmacion\" as confirmacion from \"Asistencia\" as a \n"
+                + "inner join \"Participantes\" as p on a.\"IdPart\" = p.\"IdPart\"\n"
+                + "inner join \"Usuarios\" as u on u.\"IdUsuario\" = p.\"IdUsuario\"\n"
+                + "inner join \"Reglas\" as r on true = true\n"
+                + "where u.\"IdUsuario\" = ?";
+        Session s = sf.getCurrentSession();
+        s.beginTransaction();
+        asis = (EstadoAsistencia) s.createSQLQuery(sql)
+                .setString(0, idUsuario)
+                .setResultTransformer(Transformers.aliasToBean(EstadoAsistencia.class))
+                .uniqueResult();
+        s.getTransaction().commit();
+        return asis;
+    }
+
+    @Override
+    public void confirmarAsistencia(String idParticipante, Boolean asistencia) throws Exception {
+        Session s = sf.getCurrentSession();
+        s.beginTransaction();
+        String sql = "update \"Asistencia\" set \"Afirmacion\" = ? where \"IdPart\" = ?";
+        s.createSQLQuery(sql)
+                .setBoolean(0, asistencia)
+                .setString(1, idParticipante)
                 .executeUpdate();
         s.getTransaction().commit();
     }

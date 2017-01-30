@@ -13,7 +13,7 @@ public class Intercambio {
     private Date fecha;
     private Double monto;
     private Short estado;
-
+    
     public Intercambio() {
     }
 
@@ -56,7 +56,7 @@ public class Intercambio {
     public void setEstado(Short estado) {
         this.estado = estado;
     }
-    
+
     @Override
     public String toString() {
         return "Intercambio{" + "idRegla=" + idRegla + ", lugar=" + lugar + ", fecha=" + fecha + ", monto=" + monto + '}';

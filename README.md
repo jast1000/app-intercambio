@@ -89,14 +89,13 @@ Permite guardar el perfil de un usuario registrado en el sistema. En caso de no 
 ```
 
 ## Lista de intercambios del administrador [GET]
+http://localhost:8080/app-intercambio/webresources/api/intercambios
 
 Permite visualizar los intercambios creados por el administrador y su estado (únicamente se puede hacer uno en teoría).
 El estado 1 corresponde a creado, por lo cual el botón de sorteo podría estar habilitado.
 El estado 2 corresponde a sorteado, es decir, ya existe asignación de parejas, no debería ser posible volver a sortear.
 Si el status de respuesta es 204 (no content) es posible crear un intercambio
 Nota: la fecha está en long (new Date(fechalong); para crear fecha a partir del número en Javascript)
-
-http://localhost:8080/app-intercambio/webresources/api/intercambios
 
 ### Respuesta
 ```json
@@ -112,6 +111,8 @@ http://localhost:8080/app-intercambio/webresources/api/intercambios
 ```
 
 ## Crear intercambio [POST]
+http://localhost:8080/app-intercambio/webresources/api/intercambios
+
 Permite crear un intercambio, definiendo las reglas para este, lugar, fecha y monto mínimo.
 Si existe un intercambio, la respuesta es distinta a 200.
 Nota: la fecha está en formato ISO (en Javascript se obtiene con fecha.toISOString())
@@ -122,5 +123,63 @@ Nota: la fecha está en formato ISO (en Javascript se obtiene con fecha.toISOStr
   "lugar": "UNIVO",
   "fecha": "2017-01-29T20:52:21.377Z",
   "monto": "300"
+}
+```
+
+## Ejecutar Sorteo [POST]
+http://localhost:8080/app-intercambio/webresources/api/sorteo
+
+Permite generar el sorteo en el cual se realiza la asignación de participantes.
+El proceso valida qué no exista otro en proceso por lo cual no es posible ejecutar 2 veces.
+
+## Consultar pareja de intercambio [GET]
+http://localhost:8080/app-intercambio/webresources/api/usuarios/{usuario}/pareja
+
+Permite consultar el perfil de la pareja que fue asignada a un *usuario* posterior al proceso de sorteo.
+Si no existe pareja asignada para el usuario (antes del sorteo) en el contenido de la respuesta encontrará un error.
+
+### Respuesta
+```json
+{
+    "idParticipante": "cbcf10e9-6eb2-46ee-b141-37161c772d56",
+    "nombres": "Jesus23",
+    "edad": 23,
+    "sexo": "masculino",
+    "grado": "1",
+    "grupo": "a",
+    "area": "area",
+    "gustos": "x",
+    "usuario": null,
+    "opcionesIntercambio": null
+}
+```
+
+## Consultar estado de invitación [GET]
+http://localhost:8080/app-intercambio/webresources/api/usuarios/jast1000@gmail.com/invitacion
+
+Permite mostrar la información del intercambio (lugar, fecha y monto) al que fue invitado. El atributo confirmacion permite conocer si la opción de confirmar será habilitada. Si es null significa que no hay confirmación aún. Si es true o false significa que ha aceptado o la ha rechazado.
+Nota: La fecha se encuentra en long.
+
+### Respuesta
+```json
+{
+    "idRegla": null,
+    "lugar": "UNIVO",
+    "fecha": 1485723141377,
+    "monto": 300,
+    "estado": null,
+    "confirmacion": null
+}
+```
+
+## Confirmación de asistencia [PUT]
+http://localhost:8080/app-intercambio/webresources/api/usuarios/{usuario}/invitacion
+
+Permite confirmar la asistencia al intercambio de un usuario. Si la respuesta es 200 significa que ha sido guardada la conformación. Si el usuario no existe el status será 404 (bad request).
+
+### Petición
+```json
+{
+	"confirmacion": true
 }
 ```

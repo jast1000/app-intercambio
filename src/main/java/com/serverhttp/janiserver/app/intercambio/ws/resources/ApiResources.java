@@ -1,5 +1,6 @@
 package com.serverhttp.janiserver.app.intercambio.ws.resources;
 
+import com.serverhttp.janiserver.app.intercambio.model.EstadoAsistencia;
 import com.serverhttp.janiserver.app.intercambio.model.Intercambio;
 import com.serverhttp.janiserver.app.intercambio.model.PerfilUsuario;
 import com.serverhttp.janiserver.app.intercambio.model.Usuario;
@@ -11,6 +12,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -84,7 +86,7 @@ public class ApiResources {
             return Response.serverError().entity("{\"error\": \"" + ex.getMessage() + "\"}").build();
         }
     }
-    
+
     @GET
     @Path("perfiles/{usuario}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -102,7 +104,7 @@ public class ApiResources {
             return Response.serverError().entity("{\"error\": \"" + ex.getMessage() + "\"}").build();
         }
     }
-    
+
     @POST
     @Path("perfiles")
     @Produces(MediaType.APPLICATION_JSON)
@@ -154,6 +156,91 @@ public class ApiResources {
             } else {
                 return Response.noContent().build();
             }
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage(), ex);
+            return Response.serverError().entity("{\"error\": \"" + ex.getMessage() + "\"}").build();
+        }
+    }
+
+    @POST
+    @Path("sorteo")
+    public Response generarSorteo() {
+        try {
+            List<Intercambio> intercambios = intercambioDAO.listarIntercambios();
+            if (intercambios.get(0).getEstado() == 2) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"Ya existe un sorteo realizado\"}")
+                        .build();
+            } else {
+                intercambioDAO.generarSorteo();
+            }
+            return Response.ok().build();
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage(), ex);
+            return Response.serverError().entity("{\"error\": \"" + ex.getMessage() + "\"}").build();
+        }
+    }
+
+    @GET
+    @Path("usuarios/{idUsuario}/pareja")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response consultarPareja(@PathParam("idUsuario") String idUsuario) {
+        try {
+            PerfilUsuario pu = intercambioDAO.consultarPerfilPareja(idUsuario);
+            if (pu == null) {
+                return Response.status(Response.Status.NO_CONTENT)
+                        .entity("{\"error\": \"No existe pareja asignada para el usuario\"}")
+                        .build();
+            } else {
+                return Response.ok(pu).build();
+            }
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage(), ex);
+            return Response.serverError().entity("{\"error\": \"" + ex.getMessage() + "\"}").build();
+        }
+    }
+
+    @GET
+    @Path("usuarios/{idUsuario}/invitacion")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response consultarEstadoInvitacion(@PathParam("idUsuario") String idUsuario) {
+        try {
+            EstadoAsistencia as = intercambioDAO.consultarEstadoAsistencia(idUsuario);
+            if (as == null) {
+                return Response.status(Response.Status.NO_CONTENT)
+                        .entity("{\"error\": \"El usuario no cuenta con invitación para participar en un intercambio\"}")
+                        .build();
+            } else {
+                return Response.ok(as).build();
+            }
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage(), ex);
+            return Response.serverError().entity("{\"error\": \"" + ex.getMessage() + "\"}").build();
+        }
+    }
+
+    @PUT
+    @Path("usuarios/{idUsuario}/invitacion")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response consultarEstadoInvitacion(@PathParam("idUsuario") String usuario, EstadoAsistencia asistencia) {
+        try {
+            PerfilUsuario perfil = intercambioDAO.obtenerPerfilParticipante(usuario);
+            if (perfil == null) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"El usuario no existe\"}")
+                        .build();
+            }
+            EstadoAsistencia as = intercambioDAO.consultarEstadoAsistencia(usuario);
+            if (as == null) {
+                return Response.status(Response.Status.NO_CONTENT)
+                        .entity("{\"error\": \"El usuario no cuenta con invitación para participar en un intercambio\"}")
+                        .build();
+            }
+            intercambioDAO.confirmarAsistencia(perfil.getIdParticipante(), asistencia.getConfirmacion());
+            return Response.ok().build();
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage(), ex);
             return Response.serverError().entity("{\"error\": \"" + ex.getMessage() + "\"}").build();
